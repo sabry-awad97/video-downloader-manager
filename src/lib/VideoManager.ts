@@ -20,10 +20,12 @@ export class VideoManager {
     const streamUrl = info.streamingData.adaptiveFormats[0].url;
     const fileSize = info.streamingData.adaptiveFormats[0].contentLength;
     const title = info.videoDetails.title;
+    const videoId = info.videoDetails.videoId;
     const video: Video = {
-      streamUrl: streamUrl,
+      streamUrl,
       fileSize: parseInt(fileSize, 10),
-      title: title,
+      title,
+      videoId,
     };
 
     return video;

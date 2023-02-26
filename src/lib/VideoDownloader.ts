@@ -34,7 +34,7 @@ export class VideoDownloader {
     const client = axios.create();
 
     let state: StreamState = {
-      fileSize: this.config.fileSize,
+      fileSize: this.config.videoSize,
       downloaded: 0,
       buffer: new Uint8Array(),
     };

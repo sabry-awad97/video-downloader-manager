@@ -1,27 +1,21 @@
-import cliProgress from 'cli-progress';
 import fs from 'fs';
 import pLimit from 'p-limit';
 import path from 'path';
 
 import { DownloadConfig } from './DownloadConfig.js';
-import { bytesToHumanReadable } from './helpers.js';
-import { VideoManager } from './VideoManager.js';
+import { MultiBar } from './MultiBar';
 import { VideoDownloader } from './VideoDownloader.js';
+import { VideoManager } from './VideoManager.js';
 
 export class DownloaderManager {
   maxParallelDownloads: number;
   videoUrls: string[];
   downloadQueue: Promise<any>[];
-  bars: cliProgress.MultiBar;
+  multiBar = new MultiBar();
   constructor(maxParallelDownloads = 2) {
     this.maxParallelDownloads = maxParallelDownloads;
     this.videoUrls = [];
     this.downloadQueue = [];
-    this.bars = new cliProgress.MultiBar({
-      format: 'Downloading {name} |{bar}| {percentage}% | {value}/{total}',
-      clearOnComplete: true,
-      hideCursor: true,
-    });
   }
 
   addVideoUrl(videoUrl: string) {
@@ -38,7 +32,7 @@ export class DownloaderManager {
 
     await Promise.all(downloadPromises);
 
-    this.bars.stop();
+    this.multiBar.stop();
     console.log('All videos downloaded successfully');
   }
 
@@ -47,8 +41,8 @@ export class DownloaderManager {
     const video = await videoManager.getVideo();
     const downloadConfig = new DownloadConfig().build(video);
     const downloader = new VideoDownloader(downloadConfig);
-    const bar = this.bars.create(1, 0, { name: videoUrl });
-    bar.setTotal(downloadConfig.fileSize);
+    const bar = this.multiBar.create(videoUrl, downloadConfig.videoSize);
+
     const videoTitle = `${video.title.replace(/\//g, '_')}.mp4`;
     const videoPath = path.join(process.cwd(), videoTitle);
     const writeStream = fs.createWriteStream(videoPath);
@@ -56,11 +50,7 @@ export class DownloaderManager {
       downloader
         .downloadVideo({
           onProgress: ({ downloaded, totalSize }) => {
-            const percent = (downloaded / totalSize) * 100;
-            bar.update(downloaded, {
-              percentage: percent.toFixed(2),
-              value: bytesToHumanReadable(downloaded),
-            });
+            this.multiBar.update(bar, downloaded, totalSize);
           },
           onChunk: (chunk: Uint8Array) => {
             writeStream.write(chunk);
@@ -68,10 +58,11 @@ export class DownloaderManager {
         })
         .then(() => {
           writeStream.end();
-          bar.update(downloadConfig.fileSize, {
-            percentage: 100,
-            value: bytesToHumanReadable(downloadConfig.fileSize),
-          });
+          this.multiBar.update(
+            bar,
+            downloadConfig.videoSize,
+            downloadConfig.videoSize
+          );
           console.log(`Download of video ${videoUrl} completed successfully`);
           resolve();
         })
