@@ -3,6 +3,7 @@ import { VideoInfoResponse } from '../api/types.js';
 import { VideoInfoClient } from '../api/VideoInfoClient.js';
 import { Resolution } from './types';
 import LRUCache from 'lru-cache';
+import { LocalizationLibrary } from '../i18/Localization';
 
 type AdaptiveFormat = VideoInfoResponse['streamingData']['adaptiveFormats'][0];
 
@@ -12,9 +13,12 @@ export class VideoManager {
 
   constructor(
     videoUrl: string,
-    private readonly videoInfoClient: VideoInfoClient
+    private readonly videoInfoClient: VideoInfoClient,
+    private tanslatedLanguage?: string,
+    private readonly localizationLibrary?: LocalizationLibrary
   ) {
     this.videoUrl = videoUrl;
+    this.localizationLibrary = localizationLibrary;
     this.cache = new LRUCache<string, VideoInfoResponse>({
       max: 100, // maximum number of items to cache
       maxAge: 1000 * 60 * 5, // maximum age of items in milliseconds (5 minutes)
@@ -36,20 +40,39 @@ export class VideoManager {
       criteria: { resolution },
     });
 
-    const videoData: Video = VideoManager.createVideoData(videoInfo, format);
+    const videoData: Video = VideoManager.createVideoData(
+      videoInfo,
+      format,
+      this.localizationLibrary,
+      this.tanslatedLanguage
+    );
     return videoData;
   }
 
-  static createVideoData(
+  private static createVideoData(
     info: VideoInfoResponse,
-    format: AdaptiveFormat
+    format: AdaptiveFormat,
+    localizationLibrary?: LocalizationLibrary,
+    language?: string
   ): Video {
+    const translatedTitle = localizationLibrary?.translate(
+      info.videoDetails.title,
+      language
+    );
+    const translatedDescription = localizationLibrary?.translate(
+      info.videoDetails.shortDescription,
+      language
+    );
+
     return {
       streamUrl: format.url,
       videoSize: parseInt(format.contentLength),
       durationSeconds: parseInt(info.videoDetails.lengthSeconds),
       title: info.videoDetails.title,
+      description: info.videoDetails.shortDescription,
       videoId: info.videoDetails.videoId,
+      translatedTitle,
+      translatedDescription,
     };
   }
 

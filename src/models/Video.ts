@@ -4,6 +4,9 @@ export class Video {
     public videoSize: number,
     public durationSeconds: number,
     public title: string,
-    public videoId: string
+    public description: string,
+    public videoId: string,
+    public translatedTitle?: string,
+    public translatedDescription?: string
   ) {}
 }
