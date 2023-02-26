@@ -2,16 +2,16 @@ import fs from 'fs';
 import pLimit from 'p-limit';
 import path from 'path';
 
-import { DownloadConfig } from './DownloadConfig.js';
-import { MultiBar } from './MultiBar';
-import { VideoDownloader } from './VideoDownloader.js';
+import { DownloadConfig } from '../models/DownloadConfig.js';
+import { MultiBarManager } from './MultiBarManager.js';
+import { VideoDownloader } from '../downloaders/VideoDownloader.js';
 import { VideoManager } from './VideoManager.js';
 
 export class DownloaderManager {
   maxParallelDownloads: number;
   videoUrls: string[];
   downloadQueue: Promise<any>[];
-  multiBar = new MultiBar();
+  multiBar = new MultiBarManager();
   constructor(maxParallelDownloads = 2) {
     this.maxParallelDownloads = maxParallelDownloads;
     this.videoUrls = [];
@@ -36,7 +36,7 @@ export class DownloaderManager {
     console.log('All videos downloaded successfully');
   }
 
-  async downloadVideo(videoUrl: string) {
+  async downloadVideo(videoUrl: string, resolution?: string) {
     const videoManager = new VideoManager(videoUrl);
     const video = await videoManager.getVideo();
     const downloadConfig = new DownloadConfig().build(video);

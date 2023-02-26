@@ -1,6 +1,6 @@
 import axios, { AxiosError } from 'axios';
-import { DownloadConfig } from './DownloadConfig';
-import { concatenateBuffers } from './helpers.js';
+import { DownloadConfig } from '../models/DownloadConfig.js';
+import { concatenateBuffers } from '../helpers/concatenateBuffers.js';
 
 class StreamError extends Error {
   constructor(public message: string) {

@@ -1,7 +1,7 @@
 import cliProgress from 'cli-progress';
-import { bytesToHumanReadable } from './helpers.js';
+import { bytesToHumanReadable } from '../helpers/bytesToHumanReadable.js';
 
-export class MultiBar {
+export class MultiBarManager {
   bars = new cliProgress.MultiBar({
     format: 'Downloading {name} |{bar}| {percentage}% | {value}/{total}',
     clearOnComplete: true,

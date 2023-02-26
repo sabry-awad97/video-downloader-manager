@@ -1,4 +1,4 @@
-import { Video } from '../types/interfaces.js';
+import { Video } from './Video.js';
 
 const DEFAULT_MAX_RETRIES = 3;
 const DEFAULT_RANGE_SIZE = 1 * 1024 * 1024; // 1MB
@@ -13,7 +13,7 @@ export class DownloadConfig {
 
   build(video: Video): DownloadConfig {
     this.streamUrl = video.streamUrl;
-    this.videoSize = video.fileSize;
+    this.videoSize = video.videoSize;
     return this;
   }
 }

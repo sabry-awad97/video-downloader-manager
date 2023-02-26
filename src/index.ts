@@ -1,4 +1,4 @@
-import { DownloaderManager } from './lib/DownloaderManager.js';
+import { DownloaderManager } from './managers/DownloaderManager.js';
 
 const videoUrls = ['https://www.youtube.com/watch?v=wDchsz8nmbo'];
 

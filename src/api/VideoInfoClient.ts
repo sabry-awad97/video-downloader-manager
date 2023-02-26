@@ -1,6 +1,6 @@
 import axios, { AxiosRequestConfig } from 'axios';
 import dotenv from 'dotenv';
-import { VideoInfoRequest, VideoInfoResponse } from '../api/types';
+import { VideoInfoRequest, VideoInfoResponse } from './types';
 export class VideoInfoClient {
   private api_key: string;
   private headers: AxiosRequestConfig['headers'];
