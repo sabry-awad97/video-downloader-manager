@@ -1,14 +1,14 @@
 import cliProgress from 'cli-progress';
-import { bytesToHumanReadable } from './helpers.js';
-import { Video } from './Video.js';
-import { VideoDownloader } from './VideoDownloader.js';
-import { DownloadConfig } from './DownloadConfig.js';
-import { VideoInfoClient } from './VideoInfoClient.js';
-import pLimit from 'p-limit';
 import fs from 'fs';
+import pLimit from 'p-limit';
 import path from 'path';
 
-export class VideoDownloaderManager {
+import { DownloadConfig } from './DownloadConfig.js';
+import { bytesToHumanReadable } from './helpers.js';
+import { VideoManager } from './VideoManager.js';
+import { VideoDownloader } from './VideoDownloader.js';
+
+export class DownloaderManager {
   maxParallelDownloads: number;
   videoUrls: string[];
   downloadQueue: Promise<any>[];
@@ -43,9 +43,8 @@ export class VideoDownloaderManager {
   }
 
   async downloadVideo(videoUrl: string) {
-    const videoInfoClient = new VideoInfoClient();
-    const videoInfo = await videoInfoClient.getVideoInfo(videoUrl);
-    const video = Video.fromVideoInfo(videoInfo);
+    const videoManager = new VideoManager(videoUrl);
+    const video = await videoManager.getVideo();
     const downloadConfig = new DownloadConfig().build(video);
     const downloader = new VideoDownloader(downloadConfig);
     const bar = this.bars.create(1, 0, { name: videoUrl });
@@ -56,7 +55,7 @@ export class VideoDownloaderManager {
     return new Promise<void>((resolve, reject) => {
       downloader
         .downloadVideo({
-          onProgressCallback: ({ downloaded, totalSize }) => {
+          onProgress: ({ downloaded, totalSize }) => {
             const percent = (downloaded / totalSize) * 100;
             bar.update(downloaded, {
               percentage: percent.toFixed(2),

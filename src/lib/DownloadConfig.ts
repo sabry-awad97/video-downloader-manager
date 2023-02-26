@@ -1,4 +1,4 @@
-import { Video } from './Video.js';
+import { Video } from './VideoManager.js';
 const DEFAULT_MAX_RETRIES = 3;
 const DEFAULT_RANGE_SIZE = 1 * 1024 * 1024; // 1MB
 

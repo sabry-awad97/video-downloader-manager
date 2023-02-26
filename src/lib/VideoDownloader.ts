@@ -23,12 +23,12 @@ export class VideoDownloader {
   constructor(public config: DownloadConfig) {}
 
   async downloadVideo({
-    onProgressCallback,
-    onCompleteCallback,
+    onProgress,
+    onComplete,
     onChunk,
   }: {
-    onProgressCallback?: (progress: DownloadProgress) => void;
-    onCompleteCallback?: (data: Uint8Array) => void;
+    onProgress?: (progress: DownloadProgress) => void;
+    onComplete?: (data: Uint8Array) => void;
     onChunk?: (chunk: Uint8Array) => void;
   } = {}): Promise<Uint8Array> {
     const client = axios.create();
@@ -69,7 +69,7 @@ export class VideoDownloader {
 
               if (Date.now() - lastProgressPrinted >= 1000) {
                 lastProgressPrinted = Date.now();
-                onProgressCallback?.({
+                onProgress?.({
                   downloaded: state.downloaded,
                   totalSize: state.fileSize,
                 });
@@ -125,7 +125,7 @@ export class VideoDownloader {
       }
     }
 
-    onCompleteCallback?.(state.buffer);
+    onComplete?.(state.buffer);
     return state.buffer;
   }
 }

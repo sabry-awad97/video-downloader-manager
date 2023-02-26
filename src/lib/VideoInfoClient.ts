@@ -16,11 +16,11 @@ export class VideoInfoClient {
     const videoId = this.extractVideoId(videoUrl);
     const requestBody = this.getRequestBody(videoId);
 
-    const response = await axios.post(url, requestBody, {
+    const response = await axios.post<VideoInfoResponse>(url, requestBody, {
       headers: this.headers,
     });
 
-    return response.data as VideoInfoResponse;
+    return response.data;
   }
 
   private extractVideoId(videoUrl: string): string {
