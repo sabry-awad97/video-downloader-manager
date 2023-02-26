@@ -5,17 +5,23 @@ import { VideoDownloader } from './VideoDownloader.js';
 import { DownloadConfig } from './DownloadConfig.js';
 import { VideoInfoClient } from './VideoInfoClient.js';
 import pLimit from 'p-limit';
+import fs from 'fs';
+import path from 'path';
 
 export class VideoDownloaderManager {
   maxParallelDownloads: number;
   videoUrls: string[];
   downloadQueue: Promise<any>[];
-  bars: { [key: string]: cliProgress.SingleBar };
+  bars: cliProgress.MultiBar;
   constructor(maxParallelDownloads = 2) {
     this.maxParallelDownloads = maxParallelDownloads;
     this.videoUrls = [];
     this.downloadQueue = [];
-    this.bars = {};
+    this.bars = new cliProgress.MultiBar({
+      format: 'Downloading {name} |{bar}| {percentage}% | {value}/{total}',
+      clearOnComplete: true,
+      hideCursor: true,
+    });
   }
 
   addVideoUrl(videoUrl: string) {
@@ -25,17 +31,6 @@ export class VideoDownloaderManager {
   async startDownloads() {
     console.log(`Starting downloads for ${this.videoUrls.length} videos`);
 
-    const multiBar = new cliProgress.MultiBar({
-      format: 'Downloading {name} |{bar}| {percentage}% | {value}/{total}',
-      clearOnComplete: true,
-      hideCursor: true,
-    });
-
-    this.videoUrls.forEach(url => {
-      const bar = multiBar.create(1, 0, { name: url });
-      this.bars[url] = bar;
-    });
-
     const limit = pLimit(this.maxParallelDownloads);
     const downloadPromises = this.videoUrls.map(url =>
       limit(() => this.downloadVideo(url))
@@ -43,7 +38,7 @@ export class VideoDownloaderManager {
 
     await Promise.all(downloadPromises);
 
-    multiBar.stop();
+    this.bars.stop();
     console.log('All videos downloaded successfully');
   }
 
@@ -53,18 +48,27 @@ export class VideoDownloaderManager {
     const video = Video.fromVideoInfo(videoInfo);
     const downloadConfig = new DownloadConfig().build(video);
     const downloader = new VideoDownloader(downloadConfig);
-    const bar = this.bars[videoUrl];
+    const bar = this.bars.create(1, 0, { name: videoUrl });
     bar.setTotal(downloadConfig.fileSize);
+    const videoTitle = `${video.title.replace(/\//g, '_')}.mp4`;
+    const videoPath = path.join(process.cwd(), videoTitle);
+    const writeStream = fs.createWriteStream(videoPath);
     return new Promise<void>((resolve, reject) => {
       downloader
-        .downloadVideo(({ downloaded, totalSize }) => {
-          const percent = (downloaded / totalSize) * 100;
-          bar.update(downloaded, {
-            percentage: percent.toFixed(2),
-            value: bytesToHumanReadable(downloaded),
-          });
+        .downloadVideo({
+          onProgressCallback: ({ downloaded, totalSize }) => {
+            const percent = (downloaded / totalSize) * 100;
+            bar.update(downloaded, {
+              percentage: percent.toFixed(2),
+              value: bytesToHumanReadable(downloaded),
+            });
+          },
+          onChunk: (chunk: Uint8Array) => {
+            writeStream.write(chunk);
+          },
         })
         .then(() => {
+          writeStream.end();
           bar.update(downloadConfig.fileSize, {
             percentage: 100,
             value: bytesToHumanReadable(downloadConfig.fileSize),

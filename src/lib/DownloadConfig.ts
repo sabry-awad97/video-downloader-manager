@@ -1,6 +1,6 @@
 import { Video } from './Video.js';
 const DEFAULT_MAX_RETRIES = 3;
-const DEFAULT_RANGE_SIZE = 10 * 1024; // 100KB
+const DEFAULT_RANGE_SIZE = 1 * 1024 * 1024; // 1MB
 
 export class DownloadConfig {
   public streamUrl: string | null = null;

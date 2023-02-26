@@ -22,10 +22,15 @@ interface DownloadProgress {
 export class VideoDownloader {
   constructor(public config: DownloadConfig) {}
 
-  async downloadVideo(
-    onProgressCallback?: (progress: DownloadProgress) => void,
-    onCompleteCallback?: () => void
-  ): Promise<Uint8Array> {
+  async downloadVideo({
+    onProgressCallback,
+    onCompleteCallback,
+    onChunk,
+  }: {
+    onProgressCallback?: (progress: DownloadProgress) => void;
+    onCompleteCallback?: (data: Uint8Array) => void;
+    onChunk?: (chunk: Uint8Array) => void;
+  } = {}): Promise<Uint8Array> {
     const client = axios.create();
 
     let state: StreamState = {
@@ -58,6 +63,7 @@ export class VideoDownloader {
             case 200:
             case 206:
               const content = new Uint8Array(response.data);
+              onChunk?.(content);
               state.buffer = concatenateBuffers(state.buffer, content);
               state.downloaded += content.length;
 
@@ -119,7 +125,7 @@ export class VideoDownloader {
       }
     }
 
-    onCompleteCallback?.();
+    onCompleteCallback?.(state.buffer);
     return state.buffer;
   }
 }
