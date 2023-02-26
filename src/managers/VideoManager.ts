@@ -2,22 +2,34 @@ import { Video } from '../models/Video';
 import { VideoInfoResponse } from '../api/types.js';
 import { VideoInfoClient } from '../api/VideoInfoClient.js';
 import { Resolution } from './types';
+import LRUCache from 'lru-cache';
 
 type AdaptiveFormat = VideoInfoResponse['streamingData']['adaptiveFormats'][0];
 
 export class VideoManager {
   private readonly videoUrl: string;
+  private readonly cache: LRUCache<string, VideoInfoResponse>;
 
   constructor(
     videoUrl: string,
     private readonly videoInfoClient: VideoInfoClient
   ) {
     this.videoUrl = videoUrl;
+    this.cache = new LRUCache<string, VideoInfoResponse>({
+      max: 100, // maximum number of items to cache
+      maxAge: 1000 * 60 * 5, // maximum age of items in milliseconds (5 minutes)
+    });
   }
 
   async getVideo(resolution: Resolution): Promise<Video> {
-    const videoInfo: VideoInfoResponse =
-      await this.videoInfoClient.getVideoInfo(this.videoUrl);
+    let videoInfo: VideoInfoResponse | undefined = this.cache.get(
+      this.videoUrl
+    );
+
+    if (!videoInfo) {
+      videoInfo = await this.videoInfoClient.getVideoInfo(this.videoUrl);
+      this.cache.set(this.videoUrl, videoInfo);
+    }
 
     const format: AdaptiveFormat = VideoManager.chooseFormat({
       formats: videoInfo.streamingData.adaptiveFormats,
@@ -47,7 +59,7 @@ export class VideoManager {
   }: {
     formats: AdaptiveFormat[];
     criteria: {
-      resolution: '1080p' | '720p' | '480p' | '360p' | '240p' | '144p';
+      resolution: Resolution;
     };
   }): AdaptiveFormat {
     let found: AdaptiveFormat | null = formats[0];
