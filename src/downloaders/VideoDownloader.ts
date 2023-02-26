@@ -1,22 +1,12 @@
 import axios, { AxiosError } from 'axios';
 import { DownloadConfig } from '../models/DownloadConfig.js';
 import { concatenateBuffers } from '../helpers/concatenateBuffers.js';
+import { DownloadProgress, StreamState } from './types.js';
 
 class StreamError extends Error {
   constructor(public message: string) {
     super(message);
   }
-}
-
-interface StreamState {
-  fileSize: number;
-  downloaded: number;
-  buffer: Uint8Array;
-}
-
-interface DownloadProgress {
-  downloaded: number;
-  totalSize: number;
 }
 
 export class VideoDownloader {
