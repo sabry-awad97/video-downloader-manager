@@ -1,37 +1,62 @@
+import { Video } from '../models/Video';
 import { VideoInfoResponse } from '../api/types.js';
-import { Video } from '../models/Video.js';
 import { VideoInfoClient } from '../api/VideoInfoClient.js';
+import { Resolution } from './types';
+
+type AdaptiveFormat = VideoInfoResponse['streamingData']['adaptiveFormats'][0];
 
 export class VideoManager {
   private readonly videoUrl: string;
-  private readonly videoInfoClient: VideoInfoClient;
 
-  constructor(videoUrl: string) {
+  constructor(
+    videoUrl: string,
+    private readonly videoInfoClient: VideoInfoClient
+  ) {
     this.videoUrl = videoUrl;
-    this.videoInfoClient = new VideoInfoClient();
   }
 
-  async getVideo(): Promise<Video> {
-    const videoInfo = await this.videoInfoClient.getVideoInfo(this.videoUrl);
-    return VideoManager.fromVideoInfo(videoInfo);
+  async getVideo(resolution: Resolution): Promise<Video> {
+    const videoInfo: VideoInfoResponse =
+      await this.videoInfoClient.getVideoInfo(this.videoUrl);
+
+    const format: AdaptiveFormat = VideoManager.chooseFormat({
+      formats: videoInfo.streamingData.adaptiveFormats,
+      criteria: { resolution },
+    });
+
+    const videoData: Video = VideoManager.createVideoData(videoInfo, format);
+    return videoData;
   }
 
-  static fromVideoInfo(info: VideoInfoResponse): Video {
-    const streamUrl = info.streamingData.adaptiveFormats[0].url;
-    const fileSize = info.streamingData.adaptiveFormats[0].contentLength;
-    const durationSeconds =
-      info.streamingData.adaptiveFormats[0].approxDurationMs;
-    const title = info.videoDetails.title;
-    const videoId = info.videoDetails.videoId;
-
-    const video: Video = {
-      streamUrl,
-      videoSize: parseInt(fileSize, 10),
-      durationSeconds: parseInt(durationSeconds, 10),
-      title,
-      videoId,
+  static createVideoData(
+    info: VideoInfoResponse,
+    format: AdaptiveFormat
+  ): Video {
+    return {
+      streamUrl: format.url,
+      videoSize: parseInt(format.contentLength),
+      durationSeconds: parseInt(info.videoDetails.lengthSeconds),
+      title: info.videoDetails.title,
+      videoId: info.videoDetails.videoId,
     };
+  }
 
-    return video;
+  static chooseFormat({
+    formats,
+    criteria,
+  }: {
+    formats: AdaptiveFormat[];
+    criteria: {
+      resolution: '1080p' | '720p' | '480p' | '360p' | '240p' | '144p';
+    };
+  }): AdaptiveFormat {
+    let found: AdaptiveFormat | null = formats[0];
+    for (const format of formats) {
+      if (criteria?.resolution == format['qualityLabel']) {
+        found = format;
+        break;
+      }
+    }
+    return found;
   }
 }

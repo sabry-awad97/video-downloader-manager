@@ -6,6 +6,8 @@ import { DownloadConfig } from '../models/DownloadConfig.js';
 import { MultiBarManager } from './MultiBarManager.js';
 import { VideoDownloader } from '../downloaders/VideoDownloader.js';
 import { VideoManager } from './VideoManager.js';
+import { VideoInfoClient } from '../api/VideoInfoClient.js';
+import { Resolution } from './types.js';
 
 export class DownloaderManager {
   maxParallelDownloads: number;
@@ -36,9 +38,10 @@ export class DownloaderManager {
     console.log('All videos downloaded successfully');
   }
 
-  async downloadVideo(videoUrl: string, resolution?: string) {
-    const videoManager = new VideoManager(videoUrl);
-    const video = await videoManager.getVideo();
+  async downloadVideo(videoUrl: string, resolution?: Resolution) {
+    const videoInfoClient = new VideoInfoClient();
+    const videoManager = new VideoManager(videoUrl, videoInfoClient);
+    const video = await videoManager.getVideo(resolution || '1080p');
     const downloadConfig = new DownloadConfig().build(video);
     const downloader = new VideoDownloader(downloadConfig);
     const bar = this.multiBar.create(videoUrl, downloadConfig.videoSize);

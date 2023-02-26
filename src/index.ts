@@ -1,6 +1,6 @@
 import { DownloaderManager } from './managers/DownloaderManager.js';
 
-const videoUrls = ['https://www.youtube.com/watch?v=wDchsz8nmbo'];
+const videoUrls = ['https://www.youtube.com/watch?v=qLr9jdB6Hho'];
 
 const downloaderManager = new DownloaderManager(2);
 

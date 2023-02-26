@@ -1199,7 +1199,7 @@ interface ColorInfo {
   transferCharacteristics: string;
 }
 
-interface Format {
+export interface Format {
   approxDurationMs: string;
   audioChannels: number;
   audioQuality: string;
