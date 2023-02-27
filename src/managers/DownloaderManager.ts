@@ -34,7 +34,7 @@ export class DownloaderManager {
 
     console.log('Optimal concurrent downloads: ' + optimalConcurrentDownloads);
 
-    if (optimalConcurrentDownloads > 10) {
+    if (optimalConcurrentDownloads > this.maxParallelDownloads) {
       optimalConcurrentDownloads = this.maxParallelDownloads;
     }
 
