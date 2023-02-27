@@ -21,7 +21,7 @@ export class VideoManager {
     this.localizationLibrary = localizationLibrary;
     this.cache = new LRUCache<string, VideoInfoResponse>({
       max: 100, // maximum number of items to cache
-      maxAge: 1000 * 60 * 5, // maximum age of items in milliseconds (5 minutes)
+      ttl: 1000 * 60 * 5, // maximum age of items in milliseconds (5 minutes)
     });
   }
 

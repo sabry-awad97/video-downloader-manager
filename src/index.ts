@@ -8,6 +8,6 @@ for (const videoUrl of videoUrls) {
   downloaderManager.addVideoUrl(videoUrl);
 }
 
-downloaderManager.startDownloads().catch(error => {
+downloaderManager.startDownloads('1080p').catch(error => {
   console.error(`Failed to download videos: ${error}`);
 });
